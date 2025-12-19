@@ -1,0 +1,34 @@
+stages:
+    - packages
+
+Ominigo:
+    stage: packages
+    trigger:
+        include: cd_configurations/.gitlab-ci-master.yml
+        strategy: depend
+    only:
+        - master
+
+AjmanTaxiOminigoQARevamp:
+    stage: packages
+    trigger:
+        include: cd_configurations/.gitlab-ci-AjmanTaxiOminigoQARevamp.yml
+        strategy: depend
+    only:
+        - AjmanTaxiOminigoQARevamp
+
+LBMSOminigoQARevamp:
+    stage: packages
+    trigger:
+        include: cd_configurations/.gitlab-ci-LBMSOminigoQARevamp.yml
+        strategy: depend
+    only:
+        - LBMSOminigoQARevamp
+
+ChauffeurOminigoRevamp:
+    stage: packages
+    trigger:
+        include: cd_configurations/.gitlab-ci-ChauffeurOminigoRevamp.yml
+        strategy: depend
+    only:
+        - ChauffeurOminigoRevamp
