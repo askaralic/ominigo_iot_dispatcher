@@ -85,7 +85,9 @@ public class MongoRepository
             .FirstOrDefaultAsync(cancellationToken);
 
         var retryCount = queueItem.AttemptCount ?? existing?.RetryCount ?? 0;
-        var dispatchStatus = queueItem.DispatchStatusUno ?? existing?.DispatchStatusUno ?? 0;
+        var existingStatus = existing?.DispatchStatusUno;
+        if (existingStatus == 0) existingStatus = DispatchStatus.Pending; // normalize old data
+        var dispatchStatus = queueItem.DispatchStatusUno ?? existingStatus ?? DispatchStatus.Pending;
         var preserveProcessing = string.Equals(existing?.State, "processing", StringComparison.OrdinalIgnoreCase);
 
         var updateBuilder = Builders<DispatchQueueDocument>.Update
@@ -138,6 +140,7 @@ public class MongoRepository
             .Set(x => x.State, "processing")
             .Set(x => x.ProcessingBy, instanceId)
             .Set(x => x.ProcessingOn, now)
+            .Set(x => x.DispatchStatusUno, DispatchStatus.InProgress)
             .Set(x => x.UpdatedOn, now);
 
         var options = new FindOneAndUpdateOptions<DispatchQueueDocument>
@@ -165,7 +168,7 @@ public class MongoRepository
             .Set(x => x.State, "pending_dispatch")
             .Set(x => x.LastError, lastError)
             .Inc(x => x.RetryCount, 1)
-            .Set(x => x.DispatchStatusUno, dispatchStatusUno ?? 0)
+            .Set(x => x.DispatchStatusUno, dispatchStatusUno ?? DispatchStatus.Pending)
             .Set(x => x.ProcessingBy, null)
             .Set(x => x.ProcessingOn, null)
             .Set(x => x.UpdatedOn, now);
@@ -182,7 +185,7 @@ public class MongoRepository
         var update = Builders<DispatchQueueDocument>.Update
             .Set(x => x.State, "done")
             .Set(x => x.VehicleUno, vehicleUno)
-            .Set(x => x.DispatchStatusUno, 1)
+            .Set(x => x.DispatchStatusUno, DispatchStatus.Done)
             .Set(x => x.CompletedOn, now)
             .Set(x => x.UpdatedOn, now);
 
@@ -198,7 +201,7 @@ public class MongoRepository
         var update = Builders<DispatchQueueDocument>.Update
             .Set(x => x.State, "failed")
             .Set(x => x.LastError, lastError)
-            .Set(x => x.DispatchStatusUno, 2)
+            .Set(x => x.DispatchStatusUno, DispatchStatus.Failed)
             .Set(x => x.CompletedOn, now)
             .Set(x => x.UpdatedOn, now)
             .Set(x => x.ProcessingBy, null)

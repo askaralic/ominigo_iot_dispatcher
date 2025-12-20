@@ -63,7 +63,7 @@ public class DispatchQueueDocument
     public DateTimeOffset UpdatedOn { get; set; }
 
     [BsonElement("dispatch_status_uno")]
-    public int DispatchStatusUno { get; set; }
+    public int DispatchStatusUno { get; set; } = DispatchStatus.Pending;
 
     [BsonElement("processing_by")]
     public string? ProcessingBy { get; set; }

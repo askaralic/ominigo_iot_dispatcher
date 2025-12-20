@@ -88,7 +88,7 @@ public class QueuePullerHostedService : BackgroundService
                 var inProgressUpdate = new UpdateQueueRequest
                 {
                     DispatchQueueUno = item.DispatchQueueUno,
-                    DispatchStatusUno = 3,
+                    DispatchStatusUno = DispatchStatus.InProgress,
                     VehicleUno = 0,
                     LockedBy = _workerOptions.InstanceId,
                     Error = null
@@ -97,11 +97,11 @@ public class QueuePullerHostedService : BackgroundService
                 var updated = await _apiClient.UpdateQueueAsync(inProgressUpdate, cancellationToken);
                 if (!updated)
                 {
-                    _logger.LogWarning("Failed to mark dispatch_queue_uno {DispatchQueueUno} as in-progress (status 3).", item.DispatchQueueUno);
+                    _logger.LogWarning("Failed to mark dispatch_queue_uno {DispatchQueueUno} as in-progress (status {Status}).", item.DispatchQueueUno, DispatchStatus.InProgress);
                 }
                 else
                 {
-                    await _mongoRepository.SetDispatchStatusAsync(item.DispatchQueueUno, 3, cancellationToken);
+                    await _mongoRepository.SetDispatchStatusAsync(item.DispatchQueueUno, DispatchStatus.InProgress, cancellationToken);
                 }
             }
             catch (OperationCanceledException)

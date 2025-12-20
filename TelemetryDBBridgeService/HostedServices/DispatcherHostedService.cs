@@ -103,7 +103,7 @@ public class DispatcherHostedService : BackgroundService
         var updateRequest = new UpdateQueueRequest
         {
             DispatchQueueUno = booking.DispatchQueueUno,
-            DispatchStatusUno = 1,
+            DispatchStatusUno = DispatchStatus.Done,
             VehicleUno = vehicle.VehicleUno,
             Error = null,
             LockedBy = _workerOptions.InstanceId
@@ -132,7 +132,7 @@ public class DispatcherHostedService : BackgroundService
             DispatchQueueUno = booking.DispatchQueueUno,
             VehicleUno = 0,
             LockedBy = _workerOptions.InstanceId,
-            DispatchStatusUno = hasReachedMaxRetry ? 2 : 0,
+            DispatchStatusUno = hasReachedMaxRetry ? DispatchStatus.Failed : DispatchStatus.Pending,
             Error = hasReachedMaxRetry ? "no_vehicle_within_radius_final" : "no_vehicle_within_radius"
         };
 
