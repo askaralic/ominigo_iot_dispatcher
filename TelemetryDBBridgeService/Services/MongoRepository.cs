@@ -72,7 +72,7 @@ public class MongoRepository
         }
     }
 
-    public async Task UpsertQueueItemAsync(QueueItemDto queueItem, CancellationToken cancellationToken)
+    public async Task<int> UpsertQueueItemAsync(QueueItemDto queueItem, CancellationToken cancellationToken)
     {
         await EnsureIndexesAsync(cancellationToken);
 
@@ -81,10 +81,11 @@ public class MongoRepository
 
         var existing = await _queueCollection
             .Find(filter)
-            .Project(x => new { x.State, x.RetryCount, x.DispatchStatusUno })
+            .Project(x => new { x.State, x.RetryCount, x.DispatchStatusUno, x.AttemptCount })
             .FirstOrDefaultAsync(cancellationToken);
 
-        var retryCount = queueItem.AttemptCount ?? existing?.RetryCount ?? 0;
+        var attemptCount = existing?.AttemptCount ?? queueItem.AttemptCount ?? 0;
+        var retryCount = existing?.RetryCount ?? queueItem.AttemptCount ?? 0;
         var existingStatus = existing?.DispatchStatusUno;
         if (existingStatus == 0) existingStatus = DispatchStatus.Pending; // normalize old data
         var dispatchStatus = queueItem.DispatchStatusUno ?? existingStatus ?? DispatchStatus.Pending;
@@ -100,7 +101,7 @@ public class MongoRepository
             .Set(x => x.PickupWindowMinutes, queueItem.PickupWindowMinutes)
             .Set(x => x.LockedBy, queueItem.LockedBy)
             .Set(x => x.LockedOn, queueItem.LockedOn)
-            .Set(x => x.AttemptCount, queueItem.AttemptCount)
+            .Set(x => x.AttemptCount, attemptCount)
             .Set(x => x.CreatedOn, queueItem.CreatedOn)
             .Set(x => x.LastError, queueItem.LastError)
             .Set(x => x.RetryCount, retryCount)
@@ -128,6 +129,7 @@ public class MongoRepository
 
         var options = new UpdateOptions { IsUpsert = true };
         await _queueCollection.UpdateOneAsync(filter, updateBuilder, options, cancellationToken);
+        return attemptCount;
     }
 
     public async Task<DispatchQueueDocument?> ClaimNextPendingAsync(string instanceId, CancellationToken cancellationToken)
@@ -140,6 +142,7 @@ public class MongoRepository
             .Set(x => x.State, "processing")
             .Set(x => x.ProcessingBy, instanceId)
             .Set(x => x.ProcessingOn, now)
+            .Inc(x => x.AttemptCount, 1)
             .Set(x => x.DispatchStatusUno, DispatchStatus.InProgress)
             .Set(x => x.UpdatedOn, now);
 

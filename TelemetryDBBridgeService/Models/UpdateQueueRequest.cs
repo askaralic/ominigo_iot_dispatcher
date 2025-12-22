@@ -18,4 +18,7 @@ public class UpdateQueueRequest
 
     [JsonPropertyName("locked_by")]
     public string LockedBy { get; set; } = string.Empty;
+
+     [JsonPropertyName("attempt_number")]
+    public long AttemptNumber { get; set; }
 }

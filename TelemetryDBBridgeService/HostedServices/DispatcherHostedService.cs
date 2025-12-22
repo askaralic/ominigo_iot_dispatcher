@@ -106,7 +106,8 @@ public class DispatcherHostedService : BackgroundService
             DispatchStatusUno = DispatchStatus.Done,
             VehicleUno = vehicle.VehicleUno,
             Error = null,
-            LockedBy = _workerOptions.InstanceId
+            LockedBy = _workerOptions.InstanceId,
+            AttemptNumber = booking.AttemptCount ?? 0
         };
 
         var apiSuccess = await _apiClient.UpdateQueueAsync(updateRequest, cancellationToken);
@@ -132,6 +133,7 @@ public class DispatcherHostedService : BackgroundService
             DispatchQueueUno = booking.DispatchQueueUno,
             VehicleUno = 0,
             LockedBy = _workerOptions.InstanceId,
+            AttemptNumber = booking.AttemptCount ?? nextRetryCount,
             DispatchStatusUno = hasReachedMaxRetry ? DispatchStatus.Failed : DispatchStatus.Pending,
             Error = hasReachedMaxRetry ? "no_vehicle_within_radius_final" : "no_vehicle_within_radius"
         };
