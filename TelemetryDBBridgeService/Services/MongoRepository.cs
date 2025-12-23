@@ -72,7 +72,7 @@ public class MongoRepository
         }
     }
 
-    public async Task<int> UpsertQueueItemAsync(QueueItemDto queueItem, CancellationToken cancellationToken)
+    public async Task<(int AttemptCount, bool IsNew)> UpsertQueueItemAsync(QueueItemDto queueItem, CancellationToken cancellationToken)
     {
         await EnsureIndexesAsync(cancellationToken);
 
@@ -128,8 +128,9 @@ public class MongoRepository
         }
 
         var options = new UpdateOptions { IsUpsert = true };
-        await _queueCollection.UpdateOneAsync(filter, updateBuilder, options, cancellationToken);
-        return attemptCount;
+        var result = await _queueCollection.UpdateOneAsync(filter, updateBuilder, options, cancellationToken);
+        var isNew = result.UpsertedId != null;
+        return (attemptCount, isNew);
     }
 
     public async Task<DispatchQueueDocument?> ClaimNextPendingAsync(string instanceId, CancellationToken cancellationToken)

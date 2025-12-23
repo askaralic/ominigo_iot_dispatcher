@@ -134,7 +134,7 @@ public class DispatcherHostedService : BackgroundService
             VehicleUno = 0,
             LockedBy = _workerOptions.InstanceId,
             AttemptNumber = booking.AttemptCount ?? nextRetryCount,
-            DispatchStatusUno = hasReachedMaxRetry ? DispatchStatus.Failed : DispatchStatus.Pending,
+            DispatchStatusUno = hasReachedMaxRetry ? DispatchStatus.Failed : DispatchStatus.InProgress,
             Error = hasReachedMaxRetry ? "no_vehicle_within_radius_final" : "no_vehicle_within_radius"
         };
 
@@ -154,7 +154,7 @@ public class DispatcherHostedService : BackgroundService
         }
         else
         {
-            await _mongoRepository.ResetPendingAsync(booking.DispatchQueueUno, updateRequest.Error, cancellationToken);
+            await _mongoRepository.ResetPendingAsync(booking.DispatchQueueUno, updateRequest.Error, cancellationToken, DispatchStatus.InProgress);
             _logger.LogInformation("Dispatch_queue_uno {DispatchQueueUno} set to pending_dispatch for retry {RetryCount}.", booking.DispatchQueueUno, nextRetryCount);
         }
     }

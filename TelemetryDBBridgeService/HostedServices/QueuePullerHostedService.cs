@@ -82,8 +82,13 @@ public class QueuePullerHostedService : BackgroundService
         {
             try
             {
-                var attemptCount = await _mongoRepository.UpsertQueueItemAsync(item, cancellationToken);
+                var (attemptCount, isNew) = await _mongoRepository.UpsertQueueItemAsync(item, cancellationToken);
                 _logger.LogInformation("Upserted dispatch_queue_uno {DispatchQueueUno}", item.DispatchQueueUno);
+
+                if (!isNew)
+                {
+                    continue;
+                }
 
                 var inProgressUpdate = new UpdateQueueRequest
                 {
