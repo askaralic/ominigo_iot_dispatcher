@@ -65,6 +65,9 @@ public class DispatchQueueDocument
     [BsonElement("dispatch_status_uno")]
     public int DispatchStatusUno { get; set; } = DispatchStatus.Pending;
 
+    [BsonElement("rejected_candidates_json")]
+    public List<long>? RejectedCandidates { get; set; }
+
     [BsonElement("processing_by")]
     public string? ProcessingBy { get; set; }
 

@@ -106,6 +106,7 @@ public class MongoRepository
             .Set(x => x.LastError, queueItem.LastError)
             .Set(x => x.RetryCount, retryCount)
             .Set(x => x.DispatchStatusUno, dispatchStatus)
+            .Set(x => x.RejectedCandidates, queueItem.RejectedCandidates)
             .Set(x => x.UpdatedOn, now)
             .SetOnInsert(x => x.DispatchQueueUno, queueItem.DispatchQueueUno);
 
@@ -235,6 +236,17 @@ public class MongoRepository
     {
         await EnsureIndexesAsync(cancellationToken);
 
+        var rejectedCandidates = booking.RejectedCandidates?
+            .Where(candidate => candidate > 0)
+            .Distinct()
+            .ToList();
+
+        FilterDefinition<VehicleLiveDocument>? rejectedFilter = null;
+        if (rejectedCandidates != null && rejectedCandidates.Count > 0)
+        {
+            rejectedFilter = Builders<VehicleLiveDocument>.Filter.Nin(x => x.VehicleUno, rejectedCandidates);
+        }
+
         var filters = new List<(FilterDefinition<VehicleLiveDocument> Filter, string Label)>
         {
             (Builders<VehicleLiveDocument>.Filter.And(
@@ -250,7 +262,11 @@ public class MongoRepository
 
         foreach (var (filter, label) in filters)
         {
-            var queryDocument = filter.Render(_vehicleCollection.DocumentSerializer, _vehicleCollection.Settings.SerializerRegistry);
+            var effectiveFilter = rejectedFilter == null
+                ? filter
+                : Builders<VehicleLiveDocument>.Filter.And(filter, rejectedFilter);
+
+            var queryDocument = effectiveFilter.Render(_vehicleCollection.DocumentSerializer, _vehicleCollection.Settings.SerializerRegistry);
 
             try
             {
@@ -289,7 +305,11 @@ public class MongoRepository
         // Fallback: pull a limited set and compute distance in memory using lat/lon fields.
         foreach (var (filter, label) in filters)
         {
-            var candidates = await _vehicleCollection.Find(filter)
+            var effectiveFilter = rejectedFilter == null
+                ? filter
+                : Builders<VehicleLiveDocument>.Filter.And(filter, rejectedFilter);
+
+            var candidates = await _vehicleCollection.Find(effectiveFilter)
                 .Project(x => new VehicleLiveDocument
                 {
                     VehicleUno = x.VehicleUno,

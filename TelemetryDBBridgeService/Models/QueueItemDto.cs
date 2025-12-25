@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using TelemetryDBBridgeService.Json;
 
 namespace TelemetryDBBridgeService.Models;
 
@@ -65,4 +66,9 @@ public class QueueItemDto
     [JsonPropertyName("dispatch_status_uno")]
     [BsonElement("dispatch_status_uno")]
     public int? DispatchStatusUno { get; set; }
+
+    [JsonPropertyName("rejected_candidates_json")]
+    [JsonConverter(typeof(RejectedCandidatesConverter))]
+    [BsonElement("rejected_candidates_json")]
+    public List<long>? RejectedCandidates { get; set; }
 }

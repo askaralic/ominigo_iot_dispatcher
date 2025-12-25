@@ -67,21 +67,26 @@ public class ApiClient
                 return new List<QueueItemDto>();
             }
 
-            // Attempt legacy wrapped response: { status, message, data: [...] }
-            try
-            {
-                var payload = JsonSerializer.Deserialize<GetQueueResponse>(content, _serializerOptions);
-                if (payload?.Status == true && payload.Data != null)
-                {
-                    return payload.Data;
-                }
+            var trimmed = content.TrimStart();
 
-                _logger.LogWarning("GetQueueAsync returned unsuccessful payload. Status: {Status}, Message: {Message}", payload?.Status, payload?.Message);
-                return new List<QueueItemDto>();
-            }
-            catch (JsonException)
+            // Attempt legacy wrapped response: { status, message, data: [...] }
+            if (trimmed.StartsWith("{", StringComparison.Ordinal))
             {
-                // Ignore and try alternative shapes.
+                try
+                {
+                    var payload = JsonSerializer.Deserialize<GetQueueResponse>(content, _serializerOptions);
+                    if (payload?.Status == true && payload.Data != null)
+                    {
+                        return payload.Data;
+                    }
+
+                    _logger.LogWarning("GetQueueAsync returned unsuccessful payload. Status: {Status}, Message: {Message}", payload?.Status, payload?.Message);
+                    return new List<QueueItemDto>();
+                }
+                catch (JsonException)
+                {
+                    // Ignore and try alternative shapes.
+                }
             }
 
             // Attempt direct array: [ { queue item }, ... ]
