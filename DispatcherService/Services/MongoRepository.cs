@@ -266,7 +266,9 @@ public class MongoRepository
                 ? filter
                 : Builders<VehicleLiveDocument>.Filter.And(filter, rejectedFilter);
 
-            var queryDocument = effectiveFilter.Render(_vehicleCollection.DocumentSerializer, _vehicleCollection.Settings.SerializerRegistry);
+            var queryDocument = effectiveFilter.Render(new RenderArgs<VehicleLiveDocument>(
+                _vehicleCollection.DocumentSerializer,
+                _vehicleCollection.Settings.SerializerRegistry));
 
             try
             {
