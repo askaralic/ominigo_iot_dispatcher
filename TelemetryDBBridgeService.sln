@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 25.0.1700.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelemetryDBBridgeService", "TelemetryDBBridgeService\TelemetryDBBridgeService.csproj", "{8598A77C-5778-4AA2-81BE-5B40CE3CACDD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DispatcherService", "DispatcherService\DispatcherService.csproj", "{8598A77C-5778-4AA2-81BE-5B40CE3CACDD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
