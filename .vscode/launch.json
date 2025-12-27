@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "C#: TelemetryDBBridgeService Debug",
+            "name": "C#: DispatcherService Debug",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/TelemetryDBBridgeService/TelemetryDBBridgeService.csproj"
+            "projectPath": "${workspaceFolder}/DispatcherService/DispatcherService.csproj"
         }
 
     ]

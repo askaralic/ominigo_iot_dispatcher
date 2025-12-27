@@ -2,11 +2,11 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using TelemetryDBBridgeService.Json;
-using TelemetryDBBridgeService.Models;
-using TelemetryDBBridgeService.Options;
+using DispatcherService.Json;
+using DispatcherService.Models;
+using DispatcherService.Options;
 
-namespace TelemetryDBBridgeService.Services;
+namespace DispatcherService.Services;
 
 public class ApiClient
 {
@@ -129,7 +129,7 @@ public class ApiClient
         return new List<QueueItemDto>();
     }
 
-    public async Task<bool> UpdateQueueAsync(UpdateQueueRequest updateRequest, CancellationToken cancellationToken)
+    public async Task<UpdateQueueResult> UpdateQueueAsync(UpdateQueueRequest updateRequest, CancellationToken cancellationToken)
     {
         using var message = new HttpRequestMessage(HttpMethod.Post, _options.UpdateQueueEndpoint)
         {
@@ -142,23 +142,45 @@ public class ApiClient
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("UpdateQueueAsync responded with status code {StatusCode}", response.StatusCode);
-                return false;
+                return new UpdateQueueResult { IsSuccess = false };
             }
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
             if (string.IsNullOrWhiteSpace(content))
             {
                 _logger.LogWarning("UpdateQueueAsync returned empty body for dispatch_queue_uno {DispatchQueueUno}", updateRequest.DispatchQueueUno);
-                return false;
+                return new UpdateQueueResult { IsSuccess = false };
             }
 
             var payload = JsonSerializer.Deserialize<UpdateQueueResponse>(content, _serializerOptions);
+            if (payload == null)
+            {
+                _logger.LogWarning("UpdateQueueAsync returned unreadable payload for dispatch_queue_uno {DispatchQueueUno}", updateRequest.DispatchQueueUno);
+                return new UpdateQueueResult { IsSuccess = false };
+            }
+
+            if (payload.StatusConditionUno == 1)
+            {
+                _logger.LogWarning("UpdateQueueAsync returned status_condition_uno=1 for dispatch_queue_uno {DispatchQueueUno}", updateRequest.DispatchQueueUno);
+            }
+
             if (payload?.Status == true)
             {
-                return true;
+                return new UpdateQueueResult
+                {
+                    IsSuccess = true,
+                    StatusConditionUno = payload.StatusConditionUno,
+                    Message = payload.Message
+                };
             }
 
             _logger.LogWarning("UpdateQueueAsync returned unsuccessful payload. Status: {Status}, Message: {Message}", payload?.Status, payload?.Message);
+            return new UpdateQueueResult
+            {
+                IsSuccess = false,
+                StatusConditionUno = payload.StatusConditionUno,
+                Message = payload.Message
+            };
         }
         catch (OperationCanceledException)
         {
@@ -169,6 +191,6 @@ public class ApiClient
             _logger.LogError(ex, "Error calling UpdateQueueAsync for dispatch_queue_uno {DispatchQueueUno}", updateRequest.DispatchQueueUno);
         }
 
-        return false;
+        return new UpdateQueueResult { IsSuccess = false };
     }
 }

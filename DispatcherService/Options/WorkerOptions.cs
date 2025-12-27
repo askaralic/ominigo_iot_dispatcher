@@ -1,4 +1,4 @@
-namespace TelemetryDBBridgeService.Options;
+namespace DispatcherService.Options;
 
 public class WorkerOptions
 {

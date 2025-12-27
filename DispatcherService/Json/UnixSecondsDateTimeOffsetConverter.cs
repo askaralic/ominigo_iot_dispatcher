@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace TelemetryDBBridgeService.Json;
+namespace DispatcherService.Json;
 
 /// <summary>
 /// Converts Unix epoch seconds to/from DateTimeOffset for API payloads that use numeric timestamps.

@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Options;
-using TelemetryDBBridgeService.Options;
-using TelemetryDBBridgeService.Services;
-using TelemetryDBBridgeService.Models;
+using DispatcherService.Options;
+using DispatcherService.Services;
+using DispatcherService.Models;
 
-namespace TelemetryDBBridgeService.HostedServices;
+namespace DispatcherService.HostedServices;
 
 public class QueuePullerHostedService : BackgroundService
 {
@@ -100,8 +100,19 @@ public class QueuePullerHostedService : BackgroundService
                     AttemptNumber = attemptCount
                 };
 
-                var updated = await _apiClient.UpdateQueueAsync(inProgressUpdate, cancellationToken);
-                if (!updated)
+                var updateResult = await _apiClient.UpdateQueueAsync(inProgressUpdate, cancellationToken);
+                if (updateResult.ShouldMarkFailed)
+                {
+                    await _mongoRepository.MarkFailedAsync(
+                        item.DispatchQueueUno,
+                        updateResult.Message ?? "status_condition_uno=1",
+                        null,
+                        cancellationToken);
+                    _logger.LogWarning("Dispatch_queue_uno {DispatchQueueUno} marked failed due to status_condition_uno=1.", item.DispatchQueueUno);
+                    continue;
+                }
+
+                if (!updateResult.IsSuccess)
                 {
                     _logger.LogWarning("Failed to mark dispatch_queue_uno {DispatchQueueUno} as in-progress (status {Status}).", item.DispatchQueueUno, DispatchStatus.InProgress);
                 }

@@ -1,7 +1,7 @@
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver.GeoJsonObjectModel;
 
-namespace TelemetryDBBridgeService.Models;
+namespace DispatcherService.Models;
 
 [BsonIgnoreExtraElements]
 public class VehicleLiveDocument

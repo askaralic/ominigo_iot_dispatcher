@@ -1,8 +1,8 @@
 using Serilog;
 using Serilog.Events;
-using TelemetryDBBridgeService.HostedServices;
-using TelemetryDBBridgeService.Options;
-using TelemetryDBBridgeService.Services;
+using DispatcherService.HostedServices;
+using DispatcherService.Options;
+using DispatcherService.Services;
 
 var builder = Host.CreateDefaultBuilder(args)
     .UseWindowsService()

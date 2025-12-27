@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "TelemetryDBBridgeService": {
+    "DispatcherService": {
       "commandName": "Project",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"

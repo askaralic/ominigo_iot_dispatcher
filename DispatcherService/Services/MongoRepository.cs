@@ -2,10 +2,10 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GeoJsonObjectModel;
-using TelemetryDBBridgeService.Models;
-using TelemetryDBBridgeService.Options;
+using DispatcherService.Models;
+using DispatcherService.Options;
 
-namespace TelemetryDBBridgeService.Services;
+namespace DispatcherService.Services;
 
 public class MongoRepository
 {

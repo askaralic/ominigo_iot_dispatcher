@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Options;
-using TelemetryDBBridgeService.Models;
-using TelemetryDBBridgeService.Options;
-using TelemetryDBBridgeService.Services;
+using DispatcherService.Models;
+using DispatcherService.Options;
+using DispatcherService.Services;
 
-namespace TelemetryDBBridgeService.HostedServices;
+namespace DispatcherService.HostedServices;
 
 public class DispatcherHostedService : BackgroundService
 {
@@ -110,8 +110,19 @@ public class DispatcherHostedService : BackgroundService
             AttemptNumber = booking.AttemptCount ?? 0
         };
 
-        var apiSuccess = await _apiClient.UpdateQueueAsync(updateRequest, cancellationToken);
-        if (apiSuccess)
+        var updateResult = await _apiClient.UpdateQueueAsync(updateRequest, cancellationToken);
+        if (updateResult.ShouldMarkFailed)
+        {
+            await _mongoRepository.MarkFailedAsync(
+                booking.DispatchQueueUno,
+                updateResult.Message ?? "status_condition_uno=1",
+                booking.RetryCount,
+                cancellationToken);
+            _logger.LogWarning("Dispatch_queue_uno {DispatchQueueUno} marked failed due to status_condition_uno=1.", booking.DispatchQueueUno);
+            return;
+        }
+
+        if (updateResult.IsSuccess)
         {
             await _mongoRepository.MarkDoneAsync(booking.DispatchQueueUno, vehicle.VehicleUno, cancellationToken);
             _logger.LogInformation("Marked dispatch_queue_uno {DispatchQueueUno} as done with vehicle {VehicleUno}", booking.DispatchQueueUno, vehicle.VehicleUno);
@@ -138,9 +149,20 @@ public class DispatcherHostedService : BackgroundService
             Error = hasReachedMaxRetry ? "no_vehicle_within_radius_final" : "no_vehicle_within_radius"
         };
 
-        var apiSuccess = await _apiClient.UpdateQueueAsync(updateRequest, cancellationToken);
+        var updateResult = await _apiClient.UpdateQueueAsync(updateRequest, cancellationToken);
 
-        if (!apiSuccess)
+        if (updateResult.ShouldMarkFailed)
+        {
+            await _mongoRepository.MarkFailedAsync(
+                booking.DispatchQueueUno,
+                updateResult.Message ?? updateRequest.Error ?? "status_condition_uno=1",
+                booking.RetryCount,
+                cancellationToken);
+            _logger.LogWarning("Dispatch_queue_uno {DispatchQueueUno} marked failed due to status_condition_uno=1.", booking.DispatchQueueUno);
+            return;
+        }
+
+        if (!updateResult.IsSuccess)
         {
             await _mongoRepository.ResetPendingAsync(booking.DispatchQueueUno, "update_queue_failed_no_vehicle", cancellationToken);
             _logger.LogWarning("UpdateQueue failed for no-vehicle path; dispatch_queue_uno {DispatchQueueUno} reset to pending.", booking.DispatchQueueUno);

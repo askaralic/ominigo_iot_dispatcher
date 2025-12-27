@@ -1,4 +1,4 @@
-namespace TelemetryDBBridgeService.Models;
+namespace DispatcherService.Models;
 
 public static class DispatchStatus
 {

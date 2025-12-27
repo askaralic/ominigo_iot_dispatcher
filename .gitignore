@@ -404,4 +404,4 @@ ASALocalRun/
 # Local History for Visual Studio
 .localhistory/
 # Remove appsetting.debug
-/TelemetryDBBridgeService/appsettings.Debug.json
+/DispatcherService/appsettings.Debug.json

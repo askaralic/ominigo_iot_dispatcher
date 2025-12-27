@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace TelemetryDBBridgeService.Models;
+namespace DispatcherService.Models;
 
 public class UpdateQueueRequest
 {
